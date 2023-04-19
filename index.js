@@ -1,4 +1,6 @@
 const express = require('express');
+const ejs = require('ejs');
+const fs = require('fs').promises;
 const index = express();
 const bodyParser = require('body-parser');
 require('dotenv').config();
@@ -41,15 +43,25 @@ index.post('/text/create', async (req, res) => {
   const data = req.body;
   console.log(data);
   const text = await Text.create(data);
-  res.status(200).json({ message: 'Data received' });
+  res.status(200).redirect('/text');
 });
 
 
 index.get('/text/read', async (req, res) => {
   const texts = await Text.findAll();
-  console.log(texts);
-  res.status(200).json({message: texts});
+  const data = JSON.parse(JSON.stringify(texts));
+  console.log(data);
+  res.status(200).json(texts);
 });
+
+index.get('/text', async (req, res) => {
+  let template = await fs.readFile("./template/frontend.ejs", "utf-8");
+  const texts = await Text.findAll();
+  const examples = JSON.parse(JSON.stringify(texts));
+  let html = ejs.render(template, {examples});
+  res.send(html).status(200);
+});
+
 
 
 // Start the server
