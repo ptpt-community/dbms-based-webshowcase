@@ -2,59 +2,54 @@ const express = require('express');
 const index = express();
 const bodyParser = require('body-parser');
 require('dotenv').config();
+index.use(bodyParser.json());
+const mysql = require('mysql2');
 
-let mysql = require('mysql2');
+const {Sequelize, DataTypes} = require('sequelize');
+
 index.use(bodyParser.urlencoded({ extended: true }));
 
-let mysqlOptions = {
+let dbprops = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_USER_PASSWORD,
   database: process.env.MYSQL_DATABASE
 };
 
-console.log(mysqlOptions);
+const sequelize = new Sequelize(dbprops.database, dbprops.user, dbprops.password, {
+  host: dbprops.host,
+  dialect: 'mysql'
+});
 
-let connection = mysql.createConnection(mysqlOptions);
 
-
-
-// Use body-parser middleware to parse request bodies
-index.use(bodyParser.json());
-
-connection.connect(async function (err) {
-  if (err) {
-    return console.error('error: ' + err.message);
+const Text = sequelize.define('Text', {
+ content: {
+    type: DataTypes.STRING,
+    allowNull: false
   }
 
-  console.log('Connected to the MySQL server.');
 });
 
-// Define a POST route
-index.post('/api/myendpoint', (req, res) => {
-  // Get data from the request body
+sequelize.sync().then(()=>console.log("sync!"));
+
+console.log(dbprops);
+
+// Use body-parser middleware to parse request bodies
+
+
+index.post('/text/create', async (req, res) => {
   const data = req.body;
-  // Do something with the data
-  console.log(data.name);
-  const query = 'SELECT * FROM Persons';
-  connection.query('INSERT INTO Persons SET ?',data ,(error, results) => {
-    if (error) throw error;
-    res.send(results);
-  });
-  
-  // Return a response
+  console.log(data);
+  const text = await Text.create(data);
   res.status(200).json({ message: 'Data received' });
 });
-index.get('/api/get_data', (req, res) => {
-  const query = 'SELECT * FROM Persons';
-  connection.query(query, (error, results) => {
-    if (error) throw error;
-    res.send(results);
-  });
+
+
+index.get('/text/read', async (req, res) => {
+  const texts = await Text.findAll();
+  console.log(texts);
+  res.status(200).json({message: texts});
 });
-index.get('/api/get', (req, res) => {
-  res.status(200).json({ message: 'Data received' });
-})
 
 
 // Start the server
