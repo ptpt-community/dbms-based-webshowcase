@@ -1,15 +1,23 @@
 const express = require('express');
 const index = express();
 const bodyParser = require('body-parser');
-let mysql = require('mysql');
+require('dotenv').config();
+
+let mysql = require('mysql2');
 index.use(bodyParser.urlencoded({ extended: true }));
 
-let connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '1234',
-  database: 'test'
-});
+let mysqlOptions = {
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_USER_PASSWORD,
+  database: process.env.MYSQL_DATABASE
+};
+
+console.log(mysqlOptions);
+
+let connection = mysql.createConnection(mysqlOptions);
+
+
 
 // Use body-parser middleware to parse request bodies
 index.use(bodyParser.json());
